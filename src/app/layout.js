@@ -3,6 +3,7 @@ import "./globals.css";
 import AuthProvider from "@/provider/AuthProvider";
 import Navbar from "@/components/Navbar";
 import Container from "@/components/Container";
+import LoaddingPage from "@/components/LoaddingPage";
 
 
 const geistSans = Geist({
@@ -28,11 +29,14 @@ export default function RootLayout({ children }) {
       >
         <AuthProvider>
           <Container>
-            <Navbar />
-            {children}
-            <p className="text-center pb-2 text-sm text-white fixed bottom-1 left-1/2 -translate-x-1/2">
-              Powered by Scanno AI - Qatar | Secure instant analysis
-            </p>
+            
+              <Navbar />
+              {children}
+              <p className="text-center pb-2 text-sm text-white fixed bottom-1 left-1/2 -translate-x-1/2">
+                Powered by Scanno AI - Qatar | Secure instant analysis
+              </p>
+            
+
           </Container>
         </AuthProvider>
       </body>

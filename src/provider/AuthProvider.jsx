@@ -7,11 +7,14 @@ export const AuthContext = createContext(null)
 const AuthProvider = ({ children }) => {
 
     const [isArabic, setIsArabic] = useState(false)
+    const [messages, setMessages] = useState([])
 
 
     const UserActivity = {
         isArabic,
-        setIsArabic
+        setIsArabic,
+        messages,
+        setMessages
     }
     return (
         <AuthContext.Provider value={UserActivity}>

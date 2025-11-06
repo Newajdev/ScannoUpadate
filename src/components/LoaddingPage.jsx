@@ -22,10 +22,18 @@ export default function LoaddingPage() {
                 backgroundSize: "cover",
                 backgroundPosition: "center",
             }}
-                className="w-screen h-screen "
+                className="w-screen h-screen flex justify-center items-center "
             >
+                <div className="w-[20%] h-[20%] animate-pulse">
+                    <Image
+                    className="w-full h-full"
+                    src={"/assets/LOGO_SCANNOAI.png"}
+                    width={300}
+                    height={300}
+                    alt={"Scanno AI Logo"}
+                />
+                </div>
 
-                
             </div>
         );
     }

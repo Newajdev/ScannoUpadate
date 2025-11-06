@@ -2,25 +2,29 @@
 import { AuthContext } from "@/provider/AuthProvider";
 import { Icon } from "@iconify/react";
 import Link from "next/link";
-import { usePathname } from "next/navigation";
+import { usePathname, useRouter } from "next/navigation";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
 export default function InputField() {
-    const {isArabic} = useContext(AuthContext)
+    const { isArabic, setMessages } = useContext(AuthContext)
     const [showFileOption, setShowFileOption] = useState(false);
     const clickRef = useRef(null);
     const [images, setImages] = useState([]);
     const [pdfs, setPdfs] = useState([]);
-    const [messages, setMessages] = useState([])
     const pathName = usePathname()
+    const navigate = useRouter()
 
 
     const handleSendMessage = (e) => {
         e.preventDefault();
 
+        console.log(e);
+
+
         const formData = new FormData(e.target);
         const Message = formData.get("message");
 
+        console.log(formData);
 
         const newMessage = {
             id: Date.now(),
@@ -28,10 +32,12 @@ export default function InputField() {
             pdfs: pdfs,
             images: images,
             time: new Date().toLocaleTimeString(),
+            sender: false
         };
 
 
-        // setMessages((prev) => [...prev, newMessage]);
+
+
 
         const Messages = [
             { sender: false, message: "Do you able to inspate my car report" },
@@ -40,27 +46,18 @@ export default function InputField() {
                 message:
                     "Yes, I can inspect your car report based on your PDF or image. If you send me your file, I will check it carefully and provide you with a detailed inspection report along with the best suggestions. Do you agree to send me your file?",
             },
-            {
-                sender: false,
-                message:
-                    "Okay, I will send my PDF. Just check it and give me your detailed report.",
-            },
-            {
-                sender: true,
-                message:
-                    "Sure! Please upload your PDF file now. Once I receive it, I’ll review the full report and share my detailed findings with you shortly.",
-            },
-            { sender: false, message: "Thank you, it's helped me a lot." },
         ];
 
-        
-            setMessages(Messages);
-        
+
+        setMessages(Messages);
+        setMessages((prev) => [...prev, newMessage]);
+
 
 
         setImages([]);
         setPdfs([]);
         e.target.reset();
+        navigate.push("/inbox");
     };
 
 
@@ -208,18 +205,18 @@ export default function InputField() {
 
                     <input
                         type="text"
-                        placeholder={isArabic ? "اسألني عن أي شيء يخص سيارتك…":"Ask me Anything about you car..."}
+                        placeholder={isArabic ? "اسألني عن أي شيء يخص سيارتك…" : "Ask me Anything about you car..."}
                         className="flex-1 focus:outline-none bg-transparent text-white placeholder:text-white"
                         name="message"
                     />
 
                     <button type="submit">
-                        <Link href={'/inbox'}><Icon
+                        <Icon
                             icon="ri:send-plane-fill"
                             className={`text-[#00793D] font-bold`}
                             width={24}
                             height={24}
-                        /></Link>
+                        />
                     </button>
                 </form>
             </div>
