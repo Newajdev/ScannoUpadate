@@ -3,7 +3,6 @@ import "./globals.css";
 import AuthProvider from "@/provider/AuthProvider";
 import Navbar from "@/components/Navbar";
 import Container from "@/components/Container";
-import LoaddingPage from "@/components/LoaddingPage";
 
 
 const geistSans = Geist({
@@ -36,7 +35,6 @@ export default function RootLayout({ children }) {
                 Powered by Scanno AI - Qatar | Secure instant analysis
               </p>
             
-
           </Container>
         </AuthProvider>
       </body>

@@ -13,7 +13,7 @@ export default function Navbar() {
 
     return (
         <>
-            {pathName === "/dashboard/admin" ?
+            {pathName.startsWith("/dashboard") ?
                 ""
                 :
                 <nav className="fixed top-0 w-full bg-black/25 pt-4 pb-1 px-20 flex justify-between items-center border border-b-gray-50/20 ">

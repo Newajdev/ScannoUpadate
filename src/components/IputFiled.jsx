@@ -1,7 +1,6 @@
 "use client";
 import { AuthContext } from "@/provider/AuthProvider";
 import { Icon } from "@iconify/react";
-import Link from "next/link";
 import { usePathname, useRouter } from "next/navigation";
 import React, { useContext, useEffect, useRef, useState } from "react";
 
