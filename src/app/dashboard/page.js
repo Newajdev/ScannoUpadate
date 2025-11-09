@@ -1,7 +1,8 @@
-"use client";
+"use client"
 import { redirect } from "next/navigation";
 
 const page = () => {
+  // const token = localStorage.getItem("Acces-Token");
   const token = localStorage.getItem("Acces-Token");
 
   if (!token) {
