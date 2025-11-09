@@ -20,7 +20,32 @@ export default function page() {
     const password = e.target?.password?.value;
     const data = { email, password };
 
-    setLoading(true);
+    if (!email) {
+      toast.error("Please File up the Email field", {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+    } else if (!password) {
+      toast.error("Please File up the password field", {
+        position: "top-center",
+        autoClose: 1000,
+        hideProgressBar: false,
+        closeOnClick: false,
+        pauseOnHover: true,
+        draggable: true,
+        progress: undefined,
+        theme: "dark",
+      });
+    } else {
+      setLoading(true);
+    }
+
     axiosPublic
       .post("/user/register", data)
       .then((res) => {
@@ -60,7 +85,7 @@ export default function page() {
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
       <ToastContainer />
-      <div className="w-[250px] h-[111px]">
+      <div className="w-[200px] h-[89px] md:w-[250px] md:h-[111px]">
         <Link href={"/"}>
           <Image
             className="w-full h-full"
@@ -72,8 +97,8 @@ export default function page() {
         </Link>
       </div>
 
-      <div className="flex flex-col justify-center items-center w-[30%] py-10 gap-6">
-        <h2 className="text-5xl font-black text-white mb-6">Registration</h2>
+      <div className="flex flex-col justify-center items-center w-[80%] md:w-[60%] lg:w-[30%] py-10 gap-6">
+        <h2 className="text-4xl md:text-5xl font-black text-white mb-6">Registration</h2>
         <form onSubmit={hendleLogin} className="flex flex-col w-full gap-4">
           <div>
             <label htmlFor="email" className="text-white text-xl mb-1">

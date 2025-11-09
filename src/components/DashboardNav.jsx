@@ -53,9 +53,12 @@ export default function DashboardNav() {
       <div className="flex-1">
         {DashNavLinks.map((link, idx) => {
           return (
-            <div key={idx} className={`${pathName === link.pathname
-                    ? "text-[#00793D]"
-                    : "text-white"} py-4 `}>
+            <div
+              key={idx}
+              className={`${
+                pathName === link.pathname ? "text-[#00793D]" : "text-white"
+              } py-4 `}
+            >
               <Link href={link.pathname} className="flex gap-3 items-center">
                 <h3 className="">
                   {pathName === link.pathname
@@ -67,6 +70,17 @@ export default function DashboardNav() {
             </div>
           );
         })}
+      </div>
+      <div>
+        <button
+          onClick={() => localStorage.removeItem("Acces-Token")}
+          className="pb-10"
+        >
+          <Link href={"/"} className="flex gap-3 font-bold text-red-500">
+            <Icon icon="heroicons-outline:logout" width="24" height="24" />{" "}
+            Logout
+          </Link>
+        </button>
       </div>
     </div>
   );

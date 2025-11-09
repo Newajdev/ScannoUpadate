@@ -31,7 +31,7 @@ export default function RootLayout({ children }) {
             
               <Navbar />
               {children}
-              <p className="text-center pb-2 text-sm text-white fixed bottom-1 left-1/2 -translate-x-1/2">
+              <p className="text-center pb-2 text-[8px] md:text-[12px] lg:text-sm text-white fixed bottom-1 left-1/2 -translate-x-1/2">
                 Powered by Scanno AI - Qatar | Secure instant analysis
               </p>
             

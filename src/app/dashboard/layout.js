@@ -8,7 +8,7 @@ export default function RootLayout({ children }) {
 
   return (
     <div>
-      {pathName === "/dashboard/login" ? (
+      {pathName === "/dashboard/login" || "/dashboard/registration" ? (
         <>{ children }</>
       ) : (
         <>
@@ -16,7 +16,7 @@ export default function RootLayout({ children }) {
             <div className="w-screen  lg:w-[15%] lg:h-screen">
                 <DashboardNav/>
             </div>
-            <div className="w-screen lg:w-[85%] lg:h-screen">{children}</div>
+            <div className="w-screen lg:w-[85%] lg:h-screen flex justify-center items-center h-screen">{children}</div>
           </div>
         </>
       )}
