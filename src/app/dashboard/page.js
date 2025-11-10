@@ -1,26 +1,31 @@
 "use client";
 import Dashboard from "@/components/Dashboard";
-import { redirect } from "next/navigation";
+import { redirect, useRouter } from "next/navigation";
 import { useEffect, useState } from "react";
 
 const page = () => {
-  // const [token, setToken] = useState();
-  const token = localStorage.getItem("Acces-Token");
+  const [token, setToken] = useState();
+  const router = useRouter()
+  // const token = localStorage.getItem("Acces-Token");
 
-  // useEffect(() => {
-  //   const storedToken = localStorage.getItem("Acces-Token");
-  //   setToken(storedToken);
-  // }, []);
+  useEffect(() => {
+    const storedToken = localStorage.getItem("Acces-Token");
 
-  if (!token) {
-    return redirect("/dashboard/login");
-  } else {
+    if (!storedToken) {
+      router.push("/dashboard/login");
+    } else {
+      
+      setToken(storedToken);
+    }
+  }, []);
+
+  
     return (
       <h1 className="text-white">
         <Dashboard />
       </h1>
     );
-  }
+  
 };
 
 export default page;
