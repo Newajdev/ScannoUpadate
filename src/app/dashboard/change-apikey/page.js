@@ -5,68 +5,80 @@ import React, { useContext, useEffect, useState } from "react";
 import { SyncLoader } from "react-spinners";
 import { toast } from "react-toastify";
 
+
 export default function page() {
-  const [apikey, setApikey] = useState();
-  const AxiosPublic = useAxiosPublic();
-  const { loadding, setLoading } = useContext(AuthContext);
+  const [apikey, setApikey] = useState("");
+const axiosPublic = useAxiosPublic();
+const { loadding, setLoading } = useContext(AuthContext);
 
-  useEffect(() => {
-    // const res =  AxiosPublic.get("/admin/apikey", {
-    //   headers: {
-    //     token: `Bearer ${localStorage.getItem("Acces-Token")}`,
-    //   },
-    // });
-    // setApikey(res);
-  }, []);
+useEffect(() => {
+  const fetchApiKey = async () => {
+    try {
+      const token = localStorage.getItem("Acces-Token");
+      if (!token) return;
 
-  const hendleLogin = (e) => {
-    e.preventDefault();
-
-    const newAPI = e.target?.apikey?.value;
-
-    setLoading(true);
-
-    AxiosPublic.post("/admin/apikey", newAPI, {
-      headers: {
-        token: `Bearer ${localStorage.getItem("Acces-Token")}`,
-      },
-    })
-      .then((res) => {
-        if (res.data.access_token) {
-          localStorage.setItem("Acces-Token", res.data.access_token);
-        }
-        if (res.status === 200) {
-          toast.success("API key updated Succesfully", {
-            position: "top-center",
-            autoClose: 1000,
-            hideProgressBar: false,
-            closeOnClick: false,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-          });
-          setTimeout(() => {
-            Navigate.push("/dashboard");
-            setLoading(false);
-          }, 1000);
-        }
-      })
-      .catch((err) => {
-        if (err.status === 401) {
-          toast.error("Somthing wrong", {
-            position: "top-center",
-            autoClose: 3000,
-            hideProgressBar: false,
-            closeOnClick: false,
-            pauseOnHover: true,
-            draggable: true,
-            progress: undefined,
-            theme: "dark",
-          });
-        }
+      const res = await axiosPublic.get("/admin/apikey", {
+        headers: {
+          Authorization: `Bearer ${token}`,
+        },
       });
+
+      setApikey(res.data?.key_preview); 
+    } catch (error) {
+      console.log("API Error:", error);
+    }
   };
+
+  fetchApiKey();
+}, [loadding]);  
+
+const hendleAPIkey = async (e) => {
+  e.preventDefault();
+  const newAPI = e.target.apikey.value;
+
+  setLoading(true);
+
+  try {
+    const res = await axiosPublic.post(
+      "/admin/apikey",
+      { api_key: newAPI },
+      {
+        headers: {
+          Authorization: `Bearer ${localStorage.getItem("Acces-Token")}`,
+          "Content-Type": "application/json",
+        },
+      }
+    );
+
+    if (res.status === 200) {
+
+      toast.success("API Key updated successfully", {
+        position: "top-center",
+        theme: "dark",
+      });
+
+    }
+  } catch (error) {
+    console.log(error);
+
+    if (error.response?.status === 401) {
+      toast.error("Unauthorized!", {
+        position: "top-center",
+        theme: "dark",
+      });
+    }
+
+    if (error.response?.status === 422) {
+      toast.error("Invalid API Key format!", {
+        position: "top-center",
+        theme: "dark",
+      });
+    }
+  } finally {
+    setLoading(false);  
+  }
+};
+
 
   return (
     <div className="text-white w-full flex items-center justify-center flex-col text-center">
@@ -78,12 +90,12 @@ export default function page() {
         <p className="text-2xl my-6 flex flex-col md:flex-row gap-0 md:gap-3 ">
           <span>Current APIKey:</span>
           <span className="text-[#00a151] font-medium">
-            {apikey} sdfsdfsfsdfsfsdf
+            {JSON.stringify(apikey, null, 2)}
           </span>
         </p>
 
         <form
-          onSubmit={hendleLogin}
+          onSubmit={hendleAPIkey}
           className="flex flex-col md:flex-row items-center gap-4"
         >
           <div className="flex flex-col md:flex-row w-full items-center  gap-x-4 gap-y-2">

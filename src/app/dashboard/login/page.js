@@ -46,7 +46,7 @@ export default function page() {
       setLoading(true);
     }
 
-    AxiosPublic.post("/user/login", data)
+    AxiosPublic.post("/admin/login", data)
       .then((res) => {
         if (res.data.access_token) {
           localStorage.setItem("Acces-Token", res.data.access_token);
