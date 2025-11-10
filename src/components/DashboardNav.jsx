@@ -41,7 +41,7 @@ export default function DashboardNav() {
   ];
   return (
     <div className="md:h-screen flex md:flex-col flex-row bg-black/30 border-r-2 border-white/20 items-center justify-between text-white px-3 md:px-o">
-      <div className="w-24 h-[43px] mt-3 mb-3  md:mt-10 md:mb-24">
+      <div className="w-24 h-[43px] md:w-28 md:h-[50px] lg:w-[150px] lg:h-[67px] mt-3 mb-3  md:mt-10 md:mb-24">
         <Image
           className="w-full h-full"
           src={"/assets/LOGO_SCANNOAI.png"}
