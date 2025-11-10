@@ -8,15 +8,18 @@ export default function RootLayout({ children }) {
 
   return (
     <div>
-      {pathName === "/dashboard/login" || "/dashboard/registration" ? (
-        <>{ children }</>
+      {pathName === "/dashboard/login" ||
+      pathName === "/dashboard/registration" ? (
+        <>{children}</>
       ) : (
         <>
-          <div className="flex flex-col lg:flex-row">
-            <div className="w-screen  lg:w-[15%] lg:h-screen">
-                <DashboardNav/>
+          <div className="flex flex-col md:flex-row h-screen">
+            <div className="w-screen  md:w-[25%] lg:w-[15%] md:h-screen ">
+              <DashboardNav />
             </div>
-            <div className="w-screen lg:w-[85%] lg:h-screen flex justify-center items-center h-screen">{children}</div>
+            <div className="w-screen md:w-[80%] lg:w-[85%] h-screen md:h-screen flex justify-center items-center p-6">
+              {children}
+            </div>
           </div>
         </>
       )}

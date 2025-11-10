@@ -40,8 +40,8 @@ export default function DashboardNav() {
     },
   ];
   return (
-    <div className="lg:h-screen flex lg:flex-col flex-row bg-black/30 border-r-2 border-white/20 items-center justify-between text-white">
-      <div className="w-[150px] h-[69px] mt-10 mb-24">
+    <div className="md:h-screen flex md:flex-col flex-row bg-black/30 border-r-2 border-white/20 items-center justify-between text-white px-3 md:px-o">
+      <div className="w-24 h-[43px] mt-3 mb-3  md:mt-10 md:mb-24">
         <Image
           className="w-full h-full"
           src={"/assets/LOGO_SCANNOAI.png"}
@@ -50,7 +50,7 @@ export default function DashboardNav() {
           alt={"Scanno AI Logo"}
         />
       </div>
-      <div className="flex-1">
+      <div className="md:flex-1 flex flex-row gap-6 md:gap-0 md:flex-col">
         {DashNavLinks.map((link, idx) => {
           return (
             <div
@@ -65,7 +65,7 @@ export default function DashboardNav() {
                     ? link.iconactive
                     : link.iconNormal}
                 </h3>
-                <h3 className="font-medium lg:block hidden">{link.title}</h3>
+                <h3 className="font-medium md:block hidden">{link.title}</h3>
               </Link>
             </div>
           );
@@ -74,11 +74,11 @@ export default function DashboardNav() {
       <div>
         <button
           onClick={() => localStorage.removeItem("Acces-Token")}
-          className="pb-10"
+          className="md:pb-10"
         >
           <Link href={"/"} className="flex gap-3 font-bold text-red-500">
             <Icon icon="heroicons-outline:logout" width="24" height="24" />{" "}
-            Logout
+            <span className="font-medium md:block hidden">Logout</span>
           </Link>
         </button>
       </div>

@@ -69,20 +69,24 @@ export default function page() {
   };
 
   return (
-    <div className="text-white w-full flex items-center justify-center flex-col">
-      <div className="w-1/2">
-        <h2 className="text-2xl font-bold text-center mb-4">Hendle Your API keys</h2>
+    <div className="text-white w-full flex items-center justify-center flex-col text-center">
+      <div className="w-full lg:w-1/2 text-center">
+        <h2 className="text-2xl md:text-4xl font-bold text-center mb-4">
+          Hendle Your API keys
+        </h2>
 
-        <p className="text-2xl my-6">
-          Current APIKey:{" "}
-          <span className="text-[#00793D] font-medium">{apikey}</span>
+        <p className="text-2xl my-6 flex flex-col md:flex-row gap-0 md:gap-3 ">
+          <span>Current APIKey:</span>
+          <span className="text-[#00a151] font-medium">
+            {apikey} sdfsdfsfsdfsfsdf
+          </span>
         </p>
 
         <form
           onSubmit={hendleLogin}
-          className="flex items-center gap-4"
+          className="flex flex-col md:flex-row items-center gap-4"
         >
-          <div className="flex w-full items-center gap-x-4">
+          <div className="flex flex-col md:flex-row w-full items-center  gap-x-4 gap-y-2">
             <label htmlFor="apikey" className="text-white text-xl mb-1">
               Update API key
             </label>
@@ -91,7 +95,7 @@ export default function page() {
               name="apikey"
               type="text"
               placeholder="Paste Api Key"
-              className="flex-1 input border-2 border-[#00793D] bg-transparent placeholder:text-white/50 text-white w-full"
+              className="flex-1 input border-2 border-[#00793D] bg-transparent placeholder:text-white/50 text-white w-full py-3 md:py-0"
             />
           </div>
 

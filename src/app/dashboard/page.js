@@ -6,7 +6,6 @@ import { useEffect, useState } from "react";
 const page = () => {
   const [token, setToken] = useState();
   const router = useRouter()
-  // const token = localStorage.getItem("Acces-Token");
 
   useEffect(() => {
     const storedToken = localStorage.getItem("Acces-Token");
