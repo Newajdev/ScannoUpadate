@@ -87,19 +87,6 @@ export default function page() {
       });
   };
 
-  // const hendleLogin = (e) => {
-  //   e.preventDefault();
-
-  //   const email = e.target?.email?.value;
-  //   const password = e.target?.password?.value;
-
-  //   // setLogin(true);
-  //   // if (isAdmin) {
-  //   //   Navigate.push("/dashboard");
-  //   // } else {
-  //   //   Navigate.push("/");
-  //   // }
-  // };
 
   return (
     <div className="w-screen h-screen flex flex-col justify-center items-center">
