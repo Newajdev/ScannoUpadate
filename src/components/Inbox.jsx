@@ -16,41 +16,18 @@ const Inbox = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const cleanObject = (obj) => {
-    if (Array.isArray(obj)) {
-      return obj
-        .map((item) => cleanObject(item))
-        .filter((item) => item && Object.keys(item).length > 0);
-    }
-
-    if (typeof obj === "object" && obj !== null) {
-      const cleaned = {};
-
-      Object.entries(obj).forEach(([key, value]) => {
-        const v = cleanObject(value);
-
-        if (
-          v !== "" &&
-          v !== null &&
-          v !== undefined &&
-          !(typeof v === "object" && Object.keys(v).length === 0)
-        ) {
-          cleaned[key] = v;
-        }
-      });
-
-      return Object.keys(cleaned).length === 0 ? null : cleaned;
-    }
-
-    return obj;
-  };
-
+  // ⭐ COPY BUTTON
   const handleCopy = (data, index) => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
+  // ⭐ UNIQUE HASH FOR ONE-TIME ANIMATION
+  const createHash = (str) =>
+    btoa(unescape(encodeURIComponent(str))).slice(0, 12);
+
+  // ⭐ JSON Animated Renderer (ONE-TIME animation)
   const AnimatedJSON = ({ json, id }) => {
     const key = `json_anim_${id}`;
     const lines = JSON.stringify(json, null, 2).split("\n");
@@ -101,18 +78,47 @@ const Inbox = () => {
     );
   };
 
+  // ⭐ CHATGPT STYLE LOADING ANIMATION
+  const LoadingDots = () => {
+    const [dots, setDots] = useState("");
+
+    useEffect(() => {
+      const interval = setInterval(() => {
+        setDots((prev) => (prev.length < 3 ? prev + "." : ""));
+      }, 500);
+      return () => clearInterval(interval);
+    }, []);
+
+    return <>Analyzing{dots}</>;
+  };
+
+  // ⭐ TEXT ANIMATION FIXED FOR ONE-TIME ONLY
+  const AnimatedText = ({ msg, loading }) => {
+    if (loading) return <LoadingDots />;
+
+    const hash = createHash(msg);
+    const key = "text_animated_" + hash;
+    const animatedBefore =
+      typeof window !== "undefined" ? localStorage.getItem(key) : null;
+
+    useEffect(() => {
+      if (!animatedBefore) {
+        localStorage.setItem(key, "true");
+      }
+    }, []);
+
+    if (animatedBefore === "true") return <>{msg}</>;
+
+    return <ReactTyped strings={[msg]} typeSpeed={20} showCursor={false} />;
+  };
+
   return (
     <>
       <div className="pt-24 pb-10 w-[90%] lg:w-[70%] h-full flex flex-col justify-center items-center mx-auto">
         <div className="flex-1 w-full py-2 overflow-y-auto hide-scrollbar">
           {messages.map((msg, idx) => {
-            const cleanedJSON = msg.structured_data
-              ? cleanObject(msg.structured_data)
-              : null;
-
-            const animId = btoa(
-              JSON.stringify(cleanedJSON || msg.message)
-            ).slice(0, 10);
+            const jsonData = msg.structured_data || null;
+            const animId = createHash(JSON.stringify(jsonData || msg.message));
 
             return (
               <div
@@ -122,24 +128,31 @@ const Inbox = () => {
                 }`}
               >
                 <div>
+                  {/* ⭐ AI MESSAGES */}
                   {msg.sender ? (
                     <div className="flex flex-col items-start mr-8 md:mr-24 lg:mr-32">
-                      {msg.message && !msg.structured_data && (
+                      {/* 🌟 SHOW LOADING WHEN API PROCESSING */}
+                      {msg.loading && (
                         <p className="bg-white text-lg inline-flex px-3 py-2 text-black rounded-t-xl rounded-br-xl">
-                          <ReactTyped
-                            strings={[msg.message]}
-                            typeSpeed={20}
-                            showCursor={false}
-                          />
+                          <LoadingDots />
                         </p>
                       )}
 
-                      {cleanedJSON && (
+                      {/* 🌟 NORMAL TEXT (ANIMATED ONCE) */}
+                      {!msg.loading && msg.message && !jsonData && (
+                        <p className="bg-white text-lg inline-flex px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify">
+                          <AnimatedText msg={msg.message} loading={false} />
+                        </p>
+                      )}
+
+                      {/* 🌟 STRUCTURED JSON BLOCK */}
+                      {jsonData && (
                         <div className="text-black p-3 rounded-xl mb-2 bg-white/80 mt-2 relative">
-                          <div className="sticky top-0 pb-2 flex justify-end z-10">
+                          {/* COPY BUTTON */}
+                          <div className="sticky top-0 pb-2 z-10 flex justify-end">
                             <button
-                              onClick={() => handleCopy(cleanedJSON, idx)}
-                              className="text-sm bg-gray-300 px-2 py-1 rounded flex items-center gap-1"
+                              onClick={() => handleCopy(jsonData, idx)}
+                              className="text-sm bg-gray-300 px-2 py-1 rounded hover:bg-gray-400 transition flex items-center gap-1"
                             >
                               {copiedIndex === idx ? (
                                 <>
@@ -161,12 +174,15 @@ const Inbox = () => {
                             </button>
                           </div>
 
-                          <AnimatedJSON json={cleanedJSON} id={animId} />
+                          {/* JSON ANIMATED */}
+                          <AnimatedJSON json={jsonData} id={animId} />
                         </div>
                       )}
                     </div>
                   ) : (
+                    // ⭐ USER MESSAGES
                     <div>
+                      {/* USER IMAGES */}
                       <div className="flex gap-1 flex-wrap justify-end">
                         {msg.images?.map((url, i) => (
                           <div key={i}>
@@ -183,6 +199,7 @@ const Inbox = () => {
                         ))}
                       </div>
 
+                      {/* USER PDFS */}
                       <div className="flex gap-1 flex-wrap justify-end">
                         {msg.pdfs?.map((pdf, i) => (
                           <div
@@ -198,6 +215,7 @@ const Inbox = () => {
                         ))}
                       </div>
 
+                      {/* USER TEXT */}
                       {msg.message && (
                         <p className="text-lg inline-flex px-3 py-2 bg-[#00793D] text-white rounded-t-xl rounded-bl-xl">
                           {msg.message}

@@ -129,6 +129,9 @@ export default function InputField() {
         ]);
       }
     } catch (error) {
+      setImages([]);
+      setPdfs([]);
+      e.target.reset();
       setMessages((prev) => prev.filter((m) => !m.loading));
       console.error("API Error:", error);
 
