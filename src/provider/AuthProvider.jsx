@@ -7,13 +7,11 @@ const AuthProvider = ({ children }) => {
   const [isArabic, setIsArabic] = useState(false);
   const [messages, setMessages] = useState([]);
 
-  // Load saved chat on mount
   useEffect(() => {
     const saved = sessionStorage.getItem("chatMessages");
     if (saved) setMessages(JSON.parse(saved));
   }, []);
 
-  // Save chat on change
   useEffect(() => {
     sessionStorage.setItem("chatMessages", JSON.stringify(messages));
   }, [messages]);

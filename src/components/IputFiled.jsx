@@ -5,12 +5,12 @@ import { Icon } from "@iconify/react";
 import { usePathname, useRouter } from "next/navigation";
 import { AuthContext } from "@/provider/AuthProvider";
 import useAxiosPublic from "@/utils/useAxiosPublic";
+import { HashLoader } from "react-spinners";
 
 export default function InputField() {
   const axiosPublic = useAxiosPublic();
-  const navigate = useRouter();
   const pathName = usePathname();
-  const { isArabic, setMessages, messages, setLoading } =
+  const { isArabic, setMessages, setLoading, loadding } =
     useContext(AuthContext);
 
   const [showFileOption, setShowFileOption] = useState(false);
@@ -51,89 +51,97 @@ export default function InputField() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  const msg = e.target.message.value;
-  setLoading(true);
 
-  if (!msg && images.length === 0 && pdfs.length === 0) return;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    const msg = e.target.message.value;
+    setLoading(true);
 
-  navigate.push("/inbox");
+    if (!msg && images.length === 0 && pdfs.length === 0) return;
 
-  const newMessage = {
-    id: Date.now(),
-    sender: false,
-    message: msg,
-    images,
-    pdfs,
-    time: new Date().toLocaleTimeString(),
+
+    const userMessage = {
+      sender: false,
+      message: msg,
+      images,
+      pdfs,
+    };
+    
+    
+    const loadingMsg = {
+      sender: true,
+      loading: true,
+      message: "Report analyzing...",
+    };
+    setMessages((prev) => [...prev, loadingMsg]);
+    
+    const formData = new FormData();
+    formData.append("session_id", "");
+    formData.append("message", msg);
+    
+    images.forEach((img) => formData.append("images", img.file));
+    pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
+    
+    try {
+      const res = await axiosPublic.post("/chat/guest/unified", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+      
+      const data = res.data;
+      setMessages((prev) => [...prev, userMessage]);
+      
+      setImages([]);
+      setPdfs([]);
+      e.target.reset();
+      
+     
+      setMessages((prev) => prev.filter((m) => !m.loading));
+
+      
+      if (data?.report?.structured_data) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: data.report.summary,
+            structured_data: data.report.structured_data,
+          },
+        ]);
+      }
+      
+      else if (data?.report?.response) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: data.report.response,
+          },
+        ]);
+      }
+     
+      else {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: "No response found!",
+          },
+        ]);
+      }
+    } catch (error) {
+      setMessages((prev) => prev.filter((m) => !m.loading));
+      console.error("API Error:", error);
+
+      setMessages((prev) => [
+        ...prev,
+        { sender: true, message: "Server error. Please try again later." },
+      ]);
+    } finally {
+      setLoading(false);
+    }
   };
 
-  setMessages((prev) => [...prev, newMessage]);
-
-  const formData = new FormData();
-  formData.append("session_id", "");
-  formData.append("message", msg);
-
-  images.forEach((img) => formData.append("images", img.file));
-  pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
-
-  try {
-    const res = await axiosPublic.post("/chat/guest/unified", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
-
-    const data = res.data;
-
-    setImages([]);
-    setPdfs([]);
-    e.target.reset();
-
-    if (data.report?.structured_data) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: data.report.summary,
-          time: new Date().toLocaleTimeString(),
-        },
-      ]);
-    } else if (data.report?.response) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: data.report.response,
-          time: new Date().toLocaleTimeString(),
-        },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: "No response found!",
-          time: new Date().toLocaleTimeString(),
-        },
-      ]);
-    }
-
-  } catch (error) {
-    console.error("API Error:", error);
-    setImages([]);
-    setPdfs([]);
-    e.target.reset();
-
-    setMessages((prev) => [
-      ...prev,
-      { sender: true, message: "Server error. Please try again later." },
-    ]);
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  
   return (
     <>
       <div
@@ -253,14 +261,18 @@ const handleSendMessage = async (e) => {
             className="flex-1 bg-transparent text-white placeholder:text-white outline-none"
           />
 
-          <button type="submit">
-            <Icon
-              icon="ri:send-plane-fill"
-              className="text-[#00793D]"
-              width={24}
-              height={24}
-            />
-          </button>
+          {loadding ? (
+            <HashLoader color="#ffffff" size={25} />
+          ) : (
+            <button type="submit">
+              <Icon
+                icon="ri:send-plane-fill"
+                className="text-[#00793D]"
+                width={24}
+                height={24}
+              />
+            </button>
+          )}
         </form>
       </div>
     </>
