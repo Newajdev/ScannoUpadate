@@ -16,18 +16,15 @@ const Inbox = () => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  // ⭐ COPY BUTTON
   const handleCopy = (data, index) => {
     navigator.clipboard.writeText(JSON.stringify(data, null, 2));
     setCopiedIndex(index);
     setTimeout(() => setCopiedIndex(null), 2000);
   };
 
-  // ⭐ UNIQUE HASH FOR ONE-TIME ANIMATION
   const createHash = (str) =>
     btoa(unescape(encodeURIComponent(str))).slice(0, 12);
 
-  // ⭐ JSON Animated Renderer (ONE-TIME animation)
   const AnimatedJSON = ({ json, id }) => {
     const key = `json_anim_${id}`;
     const lines = JSON.stringify(json, null, 2).split("\n");
@@ -68,36 +65,32 @@ const Inbox = () => {
     }, [currentLine]);
 
     return (
-      <div className="text-sm font-mono whitespace-pre-wrap text-black mt-1">
-        {typedLines.map((l, i) => (
-          <div key={i} className="whitespace-pre">
-            {l}
-          </div>
-        ))}
-      </div>
+      <pre className="text-sm font-mono whitespace-pre-wrap break-words text-black leading-5">
+        {typedLines.join("\n")}
+      </pre>
     );
   };
 
-  // ⭐ CHATGPT STYLE LOADING ANIMATION
   const LoadingDots = () => {
     const [dots, setDots] = useState("");
 
     useEffect(() => {
-      const interval = setInterval(() => {
-        setDots((prev) => (prev.length < 3 ? prev + "." : ""));
-      }, 500);
+      const interval = setInterval(
+        () => setDots((p) => (p.length < 3 ? p + "." : "")),
+        500
+      );
       return () => clearInterval(interval);
     }, []);
 
     return <>Analyzing{dots}</>;
   };
 
-  // ⭐ TEXT ANIMATION FIXED FOR ONE-TIME ONLY
   const AnimatedText = ({ msg, loading }) => {
     if (loading) return <LoadingDots />;
 
     const hash = createHash(msg);
     const key = "text_animated_" + hash;
+
     const animatedBefore =
       typeof window !== "undefined" ? localStorage.getItem(key) : null;
 
@@ -123,33 +116,32 @@ const Inbox = () => {
             return (
               <div
                 key={idx}
-                className={`flex flex-col py-0.5 w-full ${
+                className={`flex flex-col py-1 w-full ${
                   msg.sender ? "items-start" : "items-end"
                 }`}
               >
-                <div>
-                  {/* ⭐ AI MESSAGES */}
-                  {msg.sender ? (
-                    <div className="flex flex-col items-start mr-8 md:mr-24 lg:mr-32">
-                      {/* 🌟 SHOW LOADING WHEN API PROCESSING */}
-                      {msg.loading && (
-                        <p className="bg-white text-lg inline-flex px-3 py-2 text-black rounded-t-xl rounded-br-xl">
-                          <LoadingDots />
-                        </p>
-                      )}
+                {msg.sender ? (
+                  <div className="flex flex-col items-start max-w-[95%]">
+                    {msg.loading && (
+                      <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl shadow">
+                        <LoadingDots />
+                      </p>
+                    )}
 
-                      {/* 🌟 NORMAL TEXT (ANIMATED ONCE) */}
-                      {!msg.loading && msg.message && !jsonData && (
-                        <p className="bg-white text-lg inline-flex px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify">
+                    {!msg.loading && msg.message && !jsonData && (
+                      <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow">
+                        <AnimatedText msg={msg.message} loading={false} />
+                      </p>
+                    )}
+
+                    {jsonData && (
+                      <>
+                        <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow w-full">
                           <AnimatedText msg={msg.message} loading={false} />
                         </p>
-                      )}
 
-                      {/* 🌟 STRUCTURED JSON BLOCK */}
-                      {jsonData && (
-                        <div className="text-black p-3 rounded-xl mb-2 bg-white/80 mt-2 relative">
-                          {/* COPY BUTTON */}
-                          <div className="sticky top-0 pb-2 z-10 flex justify-end">
+                        <div className="text-black p-3 rounded-xl bg-white/95 mt-2 shadow w-full">
+                          <div className="flex justify-end mb-2">
                             <button
                               onClick={() => handleCopy(jsonData, idx)}
                               className="text-sm bg-gray-300 px-2 py-1 rounded hover:bg-gray-400 transition flex items-center gap-1"
@@ -174,56 +166,49 @@ const Inbox = () => {
                             </button>
                           </div>
 
-                          {/* JSON ANIMATED */}
                           <AnimatedJSON json={jsonData} id={animId} />
                         </div>
-                      )}
+                      </>
+                    )}
+                  </div>
+                ) : (
+                  <div className="max-w-[80%]">
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      {msg.images?.map((url, i) => (
+                        <div
+                          key={i}
+                          className="bg-[#00793D] p-1 rounded-2xl mb-1"
+                        >
+                          <Image
+                            src={url.url}
+                            alt="img"
+                            width={200}
+                            height={200}
+                            className="rounded-xl object-cover"
+                          />
+                        </div>
+                      ))}
                     </div>
-                  ) : (
-                    // ⭐ USER MESSAGES
-                    <div>
-                      {/* USER IMAGES */}
-                      <div className="flex gap-1 flex-wrap justify-end">
-                        {msg.images?.map((url, i) => (
-                          <div key={i}>
-                            <div className="p-1 bg-[#00793D] rounded-2xl h-32 mb-1 flex justify-end">
-                              <Image
-                                src={url.url}
-                                alt={url.url}
-                                width={200}
-                                height={200}
-                                className="rounded-xl"
-                              />
-                            </div>
-                          </div>
-                        ))}
-                      </div>
 
-                      {/* USER PDFS */}
-                      <div className="flex gap-1 flex-wrap justify-end">
-                        {msg.pdfs?.map((pdf, i) => (
-                          <div
-                            key={i}
-                            className="flex items-center gap-2 p-2 bg-[#00793D] rounded-2xl text-white mb-1"
-                          >
-                            <Icon
-                              icon="mdi:file-pdf-box"
-                              className="text-white text-3xl"
-                            />
-                            <span>{pdf.name}</span>
-                          </div>
-                        ))}
-                      </div>
-
-                      {/* USER TEXT */}
-                      {msg.message && (
-                        <p className="text-lg inline-flex px-3 py-2 bg-[#00793D] text-white rounded-t-xl rounded-bl-xl">
-                          {msg.message}
-                        </p>
-                      )}
+                    <div className="flex gap-1 flex-wrap justify-end">
+                      {msg.pdfs?.map((pdf, i) => (
+                        <div
+                          key={i}
+                          className="flex items-center gap-2 p-2 bg-[#00793D] rounded-2xl text-white mb-1"
+                        >
+                          <Icon icon="mdi:file-pdf-box" className="text-3xl" />
+                          <span>{pdf.name}</span>
+                        </div>
+                      ))}
                     </div>
-                  )}
-                </div>
+
+                    {msg.message && (
+                      <p className="text-lg inline-flex px-3 py-2 bg-[#00793D] text-white rounded-t-xl rounded-bl-xl shadow">
+                        {msg.message}
+                      </p>
+                    )}
+                  </div>
+                )}
               </div>
             );
           })}

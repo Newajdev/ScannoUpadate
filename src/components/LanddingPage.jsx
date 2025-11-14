@@ -40,7 +40,6 @@ export default function LanddingPage() {
         <div className="bg-[#00793D] py-3 px-32 rounded-full text-white font-medium">
           <Link href={"/inbox"}>Start Chatting</Link>
         </div>
-        {/* <IputFiled/> */}
       </section>
 
       <SocialIcon isArabic={isArabic} />

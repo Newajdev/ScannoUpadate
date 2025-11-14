@@ -51,100 +51,97 @@ export default function InputField() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
+  
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  const msg = e.target.message.value;
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    const msg = e.target.message.value;
-    setLoading(true);
+  if (!msg && images.length === 0 && pdfs.length === 0) return;
 
-    if (!msg && images.length === 0 && pdfs.length === 0) return;
+  setLoading(true);
 
 
-    const userMessage = {
-      sender: false,
-      message: msg,
-      images,
-      pdfs,
-    };
-    
-    
-    const loadingMsg = {
-      sender: true,
-      loading: true,
-      message: "Report analyzing...",
-    };
-    setMessages((prev) => [...prev, loadingMsg]);
-    
-    const formData = new FormData();
-    formData.append("session_id", "");
-    formData.append("message", msg);
-    
-    images.forEach((img) => formData.append("images", img.file));
-    pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
-    
-    try {
-      const res = await axiosPublic.post("/chat/guest/unified", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-      
-      const data = res.data;
-      setMessages((prev) => [...prev, userMessage]);
-      
-      setImages([]);
-      setPdfs([]);
-      e.target.reset();
-      
-     
-      setMessages((prev) => prev.filter((m) => !m.loading));
+  e.target.message.value = "";
 
-      
-      if (data?.report?.structured_data) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: true,
-            message: data.report.summary,
-            structured_data: data.report.structured_data,
-          },
-        ]);
-      }
-      
-      else if (data?.report?.response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: true,
-            message: data.report.response,
-          },
-        ]);
-      }
-     
-      else {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: true,
-            message: "No response found!",
-          },
-        ]);
-      }
-    } catch (error) {
-      setImages([]);
-      setPdfs([]);
-      e.target.reset();
-      setMessages((prev) => prev.filter((m) => !m.loading));
-      console.error("API Error:", error);
 
+  const userMessage = {
+    sender: false,
+    message: msg,
+    images,
+    pdfs,
+  };
+  setMessages((prev) => [...prev, userMessage]);
+
+
+  setImages([]);
+  setPdfs([]);
+
+
+  const loadingMsg = {
+    sender: true,
+    loading: true,
+    message: "Analyzing...",
+  };
+  setMessages((prev) => [...prev, loadingMsg]);
+
+
+  const formData = new FormData();
+  formData.append("session_id", "");
+  formData.append("message", msg);
+
+  images.forEach((img) => formData.append("images", img.file));
+  pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
+
+  try {
+    const res = await axiosPublic.post("/chat/guest/unified", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    const data = res.data;
+
+
+    setMessages((prev) => prev.filter((m) => !m.loading));
+
+
+    if (data?.report?.structured_data) {
       setMessages((prev) => [
         ...prev,
-        { sender: true, message: "Server error. Please try again later." },
+        {
+          sender: true,
+          message: data.report.summary,
+          structured_data: data.report.structured_data,
+        },
       ]);
-    } finally {
-      setLoading(false);
+    } else if (data?.report?.response) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: true,
+          message: data.report.response,
+        },
+      ]);
+    } else {
+      setMessages((prev) => [
+        ...prev,
+        { sender: true, message: "No response found!" },
+      ]);
     }
-  };
+  } catch (error) {
+    console.log(error);
 
-  
+
+    setMessages((prev) => prev.filter((m) => !m.loading));
+
+    setMessages((prev) => [
+      ...prev,
+      { sender: true, message: "Server error. Please try again later." },
+    ]);
+  } finally {
+    setLoading(false);
+  }
+};
+
+
   return (
     <>
       <div
@@ -267,10 +264,10 @@ export default function InputField() {
           {loadding ? (
             <HashLoader color="#ffffff" size={25} />
           ) : (
-            <button type="submit">
+            <button type="submit" >
               <Icon
                 icon="ri:send-plane-fill"
-                className="text-[#00793D]"
+                className={`text-[#00793D] `}
                 width={24}
                 height={24}
               />
