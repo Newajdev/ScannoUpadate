@@ -51,96 +51,104 @@ export default function InputField() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  const msg = e.target.message.value;
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    const msg = e.target.message.value;
 
-  if (!msg && images.length === 0 && pdfs.length === 0) return;
+    if (!msg && images.length === 0 && pdfs.length === 0) return;
 
-  setLoading(true);
+    setLoading(true);
 
+    e.target.message.value = "";
 
-  e.target.message.value = "";
+    const userMessage = {
+      sender: false,
+      message: msg,
+      images,
+      pdfs,
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
+    setImages([]);
+    setPdfs([]);
 
-  const userMessage = {
-    sender: false,
-    message: msg,
-    images,
-    pdfs,
-  };
-  setMessages((prev) => [...prev, userMessage]);
+    const loadingMsg = {
+      sender: true,
+      loading: true,
+      message: "Analyzing...",
+    };
+    setMessages((prev) => [...prev, loadingMsg]);
 
+    const formData = new FormData();
+    formData.append("session_id", "");
+    formData.append("message", msg);
 
-  setImages([]);
-  setPdfs([]);
+    images.forEach((img) => formData.append("images", img.file));
+    pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
 
+    try {
+      const res = await axiosPublic.post("/chat/guest/unified", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
 
-  const loadingMsg = {
-    sender: true,
-    loading: true,
-    message: "Analyzing...",
-  };
-  setMessages((prev) => [...prev, loadingMsg]);
+      const data = res.data;
 
+      setMessages((prev) => prev.filter((m) => !m.loading));
 
-  const formData = new FormData();
-  formData.append("session_id", "");
-  formData.append("message", msg);
+      if (data?.report?.structured_data) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: data.report.summary,
+            structured_data: data.report.structured_data,
+          },
+        ]);
+      } else if (data?.report?.response) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: data.report.response,
+          },
+        ]);
+      } else {
+        setMessages((prev) => [
+          ...prev,
+          { sender: true, message: "No response found!" },
+        ]);
+      }
+    } catch (error) {
+      // console.log(error);
 
-  images.forEach((img) => formData.append("images", img.file));
-  pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
+      // setMessages((prev) => prev.filter((m) => !m.loading));
 
-  try {
-    const res = await axiosPublic.post("/chat/guest/unified", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+      // setMessages((prev) => [
+      //   ...prev,
+      //   { sender: true, message: "Server error. Please try again later." },
+      // ]);
 
-    const data = res.data;
+      if (error.response) {
+        const status = error.response.status;
 
-
-    setMessages((prev) => prev.filter((m) => !m.loading));
-
-
-    if (data?.report?.structured_data) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: data.report.summary,
-          structured_data: data.report.structured_data,
-        },
-      ]);
-    } else if (data?.report?.response) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: data.report.response,
-        },
-      ]);
-    } else {
-      setMessages((prev) => [
-        ...prev,
-        { sender: true, message: "No response found!" },
-      ]);
+        if (status === 413) {
+          // User error: File too big
+          showNotification("The file is too large to process");
+        } else if (status === 502 || status === 503 || status === 504) {
+          // Infrastructure error: Backend is restarting or busy
+          // DO NOT say "Server Error"
+          showNotification(
+            "The AI service is currently updating or busy. Please try again in a minute."
+          );
+        } else {
+          // Actual crash or bug
+          showNotification("An unexpected error occurred.");
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-  } catch (error) {
-    console.log(error);
-
-
-    setMessages((prev) => prev.filter((m) => !m.loading));
-
-    setMessages((prev) => [
-      ...prev,
-      { sender: true, message: "Server error. Please try again later." },
-    ]);
-  } finally {
-    setLoading(false);
-  }
-};
-
+  };
 
   return (
     <>
@@ -264,7 +272,7 @@ const handleSendMessage = async (e) => {
           {loadding ? (
             <HashLoader color="#ffffff" size={25} />
           ) : (
-            <button type="submit" >
+            <button type="submit">
               <Icon
                 icon="ri:send-plane-fill"
                 className={`text-[#00793D] `}
