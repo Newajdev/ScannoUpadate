@@ -28,7 +28,6 @@ const Inbox = () => {
   const AnimatedJSON = ({ json, id }) => {
     const key = `json_anim_${id}`;
     const lines = JSON.stringify(json, null, 2).split("\n");
-
     const alreadyPlayed =
       typeof window !== "undefined" ? localStorage.getItem(key) : null;
 
@@ -43,9 +42,9 @@ const Inbox = () => {
 
       const interval = setInterval(() => {
         setTypedLines((prev) => {
-          const arr = [...prev];
-          arr[currentLine] = (arr[currentLine] || "") + line[index];
-          return arr;
+          const copy = [...prev];
+          copy[currentLine] = (copy[currentLine] || "") + line[index];
+          return copy;
         });
 
         index++;
@@ -73,7 +72,6 @@ const Inbox = () => {
 
   const LoadingDots = () => {
     const [dots, setDots] = useState("");
-
     useEffect(() => {
       const interval = setInterval(
         () => setDots((p) => (p.length < 3 ? p + "." : "")),
@@ -81,23 +79,18 @@ const Inbox = () => {
       );
       return () => clearInterval(interval);
     }, []);
-
     return <>Analyzing{dots}</>;
   };
 
   const AnimatedText = ({ msg, loading }) => {
     if (loading) return <LoadingDots />;
-
     const hash = createHash(msg);
     const key = "text_animated_" + hash;
-
     const animatedBefore =
       typeof window !== "undefined" ? localStorage.getItem(key) : null;
 
     useEffect(() => {
-      if (!animatedBefore) {
-        localStorage.setItem(key, "true");
-      }
+      if (!animatedBefore) localStorage.setItem(key, "true");
     }, []);
 
     if (animatedBefore === "true") return <>{msg}</>;
@@ -110,7 +103,13 @@ const Inbox = () => {
       <div className="pt-24 pb-10 w-[90%] lg:w-[70%] h-full flex flex-col justify-center items-center mx-auto">
         <div className="flex-1 w-full py-2 overflow-y-auto hide-scrollbar">
           {messages.map((msg, idx) => {
-            const jsonData = msg.structured_data || null;
+            let jsonData = msg.structured_data || msg.raw_report || null;
+
+            if (jsonData && jsonData.human_summary) {
+              jsonData = { ...jsonData };
+              delete jsonData.human_summary;
+            }
+
             const animId = createHash(JSON.stringify(jsonData || msg.message));
 
             return (
@@ -136,9 +135,11 @@ const Inbox = () => {
 
                     {jsonData && (
                       <>
-                        <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow w-full">
-                          <AnimatedText msg={msg.message} loading={false} />
-                        </p>
+                        {msg.message && (
+                          <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow w-full">
+                            <AnimatedText msg={msg.message} loading={false} />
+                          </p>
+                        )}
 
                         <div className="text-black p-3 rounded-xl bg-white/95 mt-2 shadow w-full">
                           <div className="flex justify-end mb-2">
@@ -184,7 +185,7 @@ const Inbox = () => {
                             alt="img"
                             width={200}
                             height={200}
-                            className="rounded-xl object-cover"
+                            className="rounded-xl object-cover h-[200]"
                           />
                         </div>
                       ))}

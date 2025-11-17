@@ -51,104 +51,100 @@ export default function InputField() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-  const handleSendMessage = async (e) => {
-    e.preventDefault();
-    const msg = e.target.message.value;
+const handleSendMessage = async (e) => {
+  e.preventDefault();
+  const msg = e.target.message.value;
 
-    if (!msg && images.length === 0 && pdfs.length === 0) return;
+  if (!msg && images.length === 0 && pdfs.length === 0) return;
 
-    setLoading(true);
+  setLoading(true);
+  e.target.message.value = "";
 
-    e.target.message.value = "";
-
-    const userMessage = {
-      sender: false,
-      message: msg,
-      images,
-      pdfs,
-    };
-    setMessages((prev) => [...prev, userMessage]);
-
-    setImages([]);
-    setPdfs([]);
-
-    const loadingMsg = {
-      sender: true,
-      loading: true,
-      message: "Analyzing...",
-    };
-    setMessages((prev) => [...prev, loadingMsg]);
-
-    const formData = new FormData();
-    formData.append("session_id", "");
-    formData.append("message", msg);
-
-    images.forEach((img) => formData.append("images", img.file));
-    pdfs.forEach((pdf) => formData.append("pdfs", pdf.file));
-
-    try {
-      const res = await axiosPublic.post("/chat/guest/unified", formData, {
-        headers: { "Content-Type": "multipart/form-data" },
-      });
-
-      const data = res.data;
-
-      setMessages((prev) => prev.filter((m) => !m.loading));
-
-      if (data?.report?.structured_data) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: true,
-            message: data.report.summary,
-            structured_data: data.report.structured_data,
-          },
-        ]);
-      } else if (data?.report?.response) {
-        setMessages((prev) => [
-          ...prev,
-          {
-            sender: true,
-            message: data.report.response,
-          },
-        ]);
-      } else {
-        setMessages((prev) => [
-          ...prev,
-          { sender: true, message: "No response found!" },
-        ]);
-      }
-    } catch (error) {
-      // console.log(error);
-
-      // setMessages((prev) => prev.filter((m) => !m.loading));
-
-      // setMessages((prev) => [
-      //   ...prev,
-      //   { sender: true, message: "Server error. Please try again later." },
-      // ]);
-
-      if (error.response) {
-        const status = error.response.status;
-
-        if (status === 413) {
-          // User error: File too big
-          showNotification("The file is too large to process");
-        } else if (status === 502 || status === 503 || status === 504) {
-          // Infrastructure error: Backend is restarting or busy
-          // DO NOT say "Server Error"
-          showNotification(
-            "The AI service is currently updating or busy. Please try again in a minute."
-          );
-        } else {
-          // Actual crash or bug
-          showNotification("An unexpected error occurred.");
-        }
-      }
-    } finally {
-      setLoading(false);
-    }
+  const userMessage = {
+    sender: false,
+    message: msg,
+    images,
+    pdfs,
   };
+  setMessages((prev) => [...prev, userMessage]);
+
+  setImages([]);
+  setPdfs([]);
+
+  const loadingMsg = {
+    sender: true,
+    loading: true,
+    message: "Analyzing...",
+  };
+  setMessages((prev) => [...prev, loadingMsg]);
+
+  const formData = new FormData();
+  formData.append("session_id", "");
+  formData.append("message", msg);
+
+  images.forEach((img) => formData.append("files", img.file));
+  pdfs.forEach((pdf) => formData.append("files", pdf.file));
+
+  try {
+    const res = await axiosPublic.post("/chat/guest/unified", formData, {
+      headers: { "Content-Type": "multipart/form-data" },
+    });
+
+    const report = res.data?.report;
+
+    setMessages((prev) => prev.filter((m) => !m.loading));
+
+    if (report?.issues_detected) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: true,
+          message: report?.human_summary || "",
+          structured_data: report,
+        },
+      ]);
+      return;
+    }
+
+    if (report?.human_summary) {
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: true,
+          message: report.human_summary,
+        },
+      ]);
+      return;
+    }
+
+    setMessages((prev) => [
+      ...prev,
+      {
+        sender: true,
+        message: "",
+        structured_data: report,
+      },
+    ]);
+  } catch (error) {
+    if (error.response) {
+      const status = error.response.status;
+
+      if (status === 413) {
+        showNotification("The file is too large to process");
+      } else if (status === 502 || status === 503 || status === 504) {
+        showNotification(
+          "The AI service is currently updating or busy. Please try again in a minute."
+        );
+      } else {
+        showNotification("An unexpected error occurred.");
+      }
+    }
+  } finally {
+    setLoading(false);
+  }
+};
+
+
 
   return (
     <>
