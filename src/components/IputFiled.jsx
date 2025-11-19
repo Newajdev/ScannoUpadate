@@ -254,9 +254,10 @@ const handleSendMessage = async (e) => {
             )}
           </div>
 
-          <input
+          <textarea
             type="text"
             name="message"
+            rows={1}
             placeholder={
               isArabic
                 ? "اسألني عن أي شيء يخص سيارتك…"
