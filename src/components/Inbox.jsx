@@ -1,75 +1,22 @@
 "use client";
 
 import React, { useContext, useEffect, useRef, useState } from "react";
-import InputField from "./IputFiled";
+import IputField from "./InputFiled";
 import { AuthContext } from "@/provider/AuthProvider";
-import { ReactTyped } from "react-typed";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
+import ReactMarkdown from "react-markdown";
 
 const Inbox = () => {
   const { messages } = useContext(AuthContext);
   const bottomRef = useRef(null);
-  const [copiedIndex, setCopiedIndex] = useState(null);
 
+  // Auto-scroll when messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  const handleCopy = (data, index) => {
-    navigator.clipboard.writeText(JSON.stringify(data, null, 2));
-    setCopiedIndex(index);
-    setTimeout(() => setCopiedIndex(null), 2000);
-  };
-
-  const createHash = (str) =>
-    btoa(unescape(encodeURIComponent(str))).slice(0, 12);
-
-  const AnimatedJSON = ({ json, id }) => {
-    const key = `json_anim_${id}`;
-    const lines = JSON.stringify(json, null, 2).split("\n");
-    const alreadyPlayed =
-      typeof window !== "undefined" ? localStorage.getItem(key) : null;
-
-    const [typedLines, setTypedLines] = useState(alreadyPlayed ? lines : []);
-    const [currentLine, setCurrentLine] = useState(0);
-
-    useEffect(() => {
-      if (alreadyPlayed) return;
-
-      const line = lines[currentLine];
-      let index = 0;
-
-      const interval = setInterval(() => {
-        setTypedLines((prev) => {
-          const copy = [...prev];
-          copy[currentLine] = (copy[currentLine] || "") + line[index];
-          return copy;
-        });
-
-        index++;
-
-        if (index === line.length) {
-          clearInterval(interval);
-
-          if (currentLine + 1 < lines.length) {
-            setTimeout(() => setCurrentLine(currentLine + 1), 50);
-          } else {
-            localStorage.setItem(key, "true");
-          }
-        }
-      }, 8);
-
-      return () => clearInterval(interval);
-    }, [currentLine]);
-
-    return (
-      <pre className="text-sm font-mono whitespace-pre-wrap break-words text-black leading-5">
-        {typedLines.join("\n")}
-      </pre>
-    );
-  };
-
+  /* ---------------- Loading Dots ---------------- */
   const LoadingDots = () => {
     const [dots, setDots] = useState("");
     useEffect(() => {
@@ -82,35 +29,70 @@ const Inbox = () => {
     return <>Analyzing{dots}</>;
   };
 
-  const AnimatedText = ({ msg, loading }) => {
-    if (loading) return <LoadingDots />;
-    const hash = createHash(msg);
-    const key = "text_animated_" + hash;
-    const animatedBefore =
-      typeof window !== "undefined" ? localStorage.getItem(key) : null;
+  /* ---------------- Latest-only Animation ---------------- */
+  const AnimatedText = ({ msg, isLatest }) => {
+    const [text, setText] = useState("");
+
+    const normalized = msg?.replace(/\r\n/g, "\n") ?? "";
 
     useEffect(() => {
-      if (!animatedBefore) localStorage.setItem(key, "true");
-    }, []);
+      // ❗ পুরোনো message → কোনো animation হবে না
+      if (!isLatest) {
+        setText(normalized);
+        return;
+      }
 
-    if (animatedBefore === "true") return <>{msg}</>;
+      // Latest message → typing effect
+      let i = 0;
+      setText("");
 
-    return <ReactTyped strings={[msg]} typeSpeed={20} showCursor={false} />;
+      const interval = setInterval(() => {
+        setText(normalized.slice(0, i + 1));
+        i++;
+
+        // Auto scroll during typing
+        bottomRef.current?.scrollIntoView({ behavior: "smooth" });
+
+        if (i >= normalized.length) {
+          clearInterval(interval);
+        }
+      }, 12);
+
+      return () => clearInterval(interval);
+    }, [normalized, isLatest]);
+
+    return (
+      <ReactMarkdown
+        components={{
+          p: ({ children }) => (
+            <p className="m-0 p-0 whitespace-pre-wrap leading-[1.35]">
+              {children}
+            </p>
+          ),
+          li: ({ children }) => (
+            <li className="m-0 p-0 whitespace-pre-wrap leading-[1.35]">
+              {children}
+            </li>
+          ),
+        }}
+      >
+        {text}
+      </ReactMarkdown>
+    );
   };
 
   return (
     <>
       <div className="pt-24 pb-10 w-[90%] lg:w-[70%] h-full flex flex-col justify-center items-center mx-auto">
+
         <div className="flex-1 w-full py-2 overflow-y-auto hide-scrollbar">
+
           {messages.map((msg, idx) => {
-            let jsonData = msg.structured_data || msg.raw_report || null;
+            const finalMessage =
+              msg?.message ?? msg?.report?.human_summary ?? "";
 
-            if (jsonData && jsonData.human_summary) {
-              jsonData = { ...jsonData };
-              delete jsonData.human_summary;
-            }
-
-            const animId = createHash(JSON.stringify(jsonData || msg.message));
+            const isLatestAI =
+              msg.sender === true && idx === messages.length - 1;
 
             return (
               <div
@@ -119,78 +101,45 @@ const Inbox = () => {
                   msg.sender ? "items-start" : "items-end"
                 }`}
               >
+
+                {/* AI MESSAGE */}
                 {msg.sender ? (
                   <div className="flex flex-col items-start max-w-[95%]">
                     {msg.loading && (
-                      <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl shadow">
+                      <div className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl shadow">
                         <LoadingDots />
-                      </p>
+                      </div>
                     )}
 
-                    {!msg.loading && msg.message && !jsonData && (
-                      <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow">
-                        <AnimatedText msg={msg.message} loading={false} />
-                      </p>
-                    )}
-
-                    {jsonData && (
-                      <>
-                        {msg.message && (
-                          <p className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl Sender text-justify shadow w-full">
-                            <AnimatedText msg={msg.message} loading={false} />
-                          </p>
-                        )}
-
-                        <div className="text-black p-3 rounded-xl bg-white/95 mt-2 shadow w-full">
-                          <div className="flex justify-end mb-2">
-                            <button
-                              onClick={() => handleCopy(jsonData, idx)}
-                              className="text-sm bg-gray-300 px-2 py-1 rounded hover:bg-gray-400 transition flex items-center gap-1"
-                            >
-                              {copiedIndex === idx ? (
-                                <>
-                                  <Icon
-                                    icon="mdi:check-bold"
-                                    className="text-green-600 text-lg"
-                                  />
-                                  Copied
-                                </>
-                              ) : (
-                                <>
-                                  <Icon
-                                    icon="mdi:content-copy"
-                                    className="text-black text-lg"
-                                  />
-                                  Copy
-                                </>
-                              )}
-                            </button>
-                          </div>
-
-                          <AnimatedJSON json={jsonData} id={animId} />
-                        </div>
-                      </>
+                    {!msg.loading && finalMessage && (
+                      <div className="bg-white text-lg px-3 py-2 text-black rounded-t-xl rounded-br-xl shadow leading-[1.35]">
+                        <AnimatedText
+                          msg={finalMessage}
+                          isLatest={isLatestAI}
+                        />
+                      </div>
                     )}
                   </div>
                 ) : (
+                  /* USER MESSAGE */
                   <div className="max-w-[80%]">
+
+                    {/* IMAGES */}
                     <div className="flex gap-1 flex-wrap justify-end">
-                      {msg.images?.map((url, i) => (
-                        <div
-                          key={i}
-                          className="bg-[#00793D] p-1 rounded-2xl mb-1"
-                        >
+                      {msg.images?.map((img, i) => (
+                        <div key={i} className="bg-[#00793D] p-1 rounded-2xl mb-1">
                           <Image
-                            src={url.url}
+                            src={img.url}
                             alt="img"
                             width={200}
                             height={200}
-                            className="rounded-xl object-cover h-[200]"
+                            className="rounded-xl object-cover w-full h-[200]"
                           />
                         </div>
                       ))}
                     </div>
 
+                    {/* PDF FILES */}
                     <div className="flex gap-1 flex-wrap justify-end">
                       {msg.pdfs?.map((pdf, i) => (
                         <div
@@ -203,13 +152,14 @@ const Inbox = () => {
                       ))}
                     </div>
 
-                    {msg.message && (
-                      <p className="text-lg inline-flex px-3 py-2 bg-[#00793D] text-white rounded-t-xl rounded-bl-xl shadow">
-                        {msg.message}
-                      </p>
+                    {finalMessage && (
+                      <div className="text-lg inline-flex px-3 py-2 bg-[#00793D] text-white rounded-t-xl rounded-bl-xl shadow leading-[1.35] whitespace-pre-wrap">
+                        <ReactMarkdown>{finalMessage}</ReactMarkdown>
+                      </div>
                     )}
                   </div>
                 )}
+
               </div>
             );
           })}
@@ -217,7 +167,7 @@ const Inbox = () => {
           <div ref={bottomRef}></div>
         </div>
 
-        <InputField />
+        <IputField />
       </div>
     </>
   );
