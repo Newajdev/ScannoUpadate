@@ -1,7 +1,7 @@
 "use client";
 
 import React, { useContext, useEffect, useRef, useState } from "react";
-import IputField from "./InputFiled";
+import IputField from "./IputFiled";
 import { AuthContext } from "@/provider/AuthProvider";
 import Image from "next/image";
 import { Icon } from "@iconify/react";
