@@ -2,7 +2,7 @@
 
 import React, { useState, useRef, useEffect, useContext } from "react";
 import { Icon } from "@iconify/react";
-import { usePathname, useRouter } from "next/navigation";
+import { usePathname } from "next/navigation";
 import { AuthContext } from "@/provider/AuthProvider";
 import useAxiosPublic from "@/utils/useAxiosPublic";
 import { HashLoader } from "react-spinners";
@@ -15,9 +15,13 @@ export default function InputField() {
 
   const [showFileOption, setShowFileOption] = useState(false);
   const fileMenuRef = useRef(null);
+  const [sessionId, setSessionId] = useState(null);
 
   const [images, setImages] = useState([]);
   const [pdfs, setPdfs] = useState([]);
+
+  const [message, setMessage] = useState("");
+  const textareaRef = useRef(null);
 
   const handleImageChange = (e) => {
     const files = Array.from(e.target.files).map((file) => ({
@@ -25,7 +29,6 @@ export default function InputField() {
       url: URL.createObjectURL(file),
       file,
     }));
-
     setImages((prev) => [...prev, ...files]);
     setShowFileOption(false);
   };
@@ -36,7 +39,6 @@ export default function InputField() {
       url: URL.createObjectURL(file),
       file,
     }));
-
     setPdfs((prev) => [...prev, ...files]);
     setShowFileOption(false);
   };
@@ -51,100 +53,107 @@ export default function InputField() {
     return () => document.removeEventListener("mousedown", handler);
   }, []);
 
-const handleSendMessage = async (e) => {
-  e.preventDefault();
-  const msg = e.target.message.value;
+  useEffect(() => {
+    if (!textareaRef.current) return;
+    const ta = textareaRef.current;
 
-  if (!msg && images.length === 0 && pdfs.length === 0) return;
+    const lineHeight = 20;
+    const maxHeight = lineHeight * 5;
 
-  setLoading(true);
-  e.target.message.value = "";
+    ta.style.height = "0px";
 
-  const userMessage = {
-    sender: false,
-    message: msg,
-    images,
-    pdfs,
-  };
-  setMessages((prev) => [...prev, userMessage]);
+    const newHeight = ta.scrollHeight;
+    ta.style.height = Math.min(newHeight, maxHeight) + "px";
 
-  setImages([]);
-  setPdfs([]);
+    ta.style.overflowY = newHeight > maxHeight ? "auto" : "hidden";
+  }, [message]);
 
-  const loadingMsg = {
-    sender: true,
-    loading: true,
-    message: "Analyzing...",
-  };
-  setMessages((prev) => [...prev, loadingMsg]);
+  const handleSendMessage = async (e) => {
+    e.preventDefault();
+    const msg = message;
 
-  const formData = new FormData();
-  formData.append("session_id", "");
-  formData.append("message", msg);
+    if (!msg && images.length === 0 && pdfs.length === 0) return;
 
-  images.forEach((img) => formData.append("files", img.file));
-  pdfs.forEach((pdf) => formData.append("files", pdf.file));
+    setLoading(true);
+    setMessage("");
 
-  try {
-    const res = await axiosPublic.post("/chat/guest/unified", formData, {
-      headers: { "Content-Type": "multipart/form-data" },
-    });
+    const userMessage = {
+      sender: false,
+      message: msg,
+      images,
+      pdfs,
+    };
+    setMessages((prev) => [...prev, userMessage]);
 
-    const report = res.data?.report;
+    setImages([]);
+    setPdfs([]);
 
-    setMessages((prev) => prev.filter((m) => !m.loading));
+    const loadingMsg = {
+      sender: true,
+      loading: true,
+      message: "Analyzing...",
+    };
+    setMessages((prev) => [...prev, loadingMsg]);
 
-    if (report?.issues_detected) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: report?.human_summary || "",
-          structured_data: report,
-        },
-      ]);
-      return;
-    }
+    const formData = new FormData();
+    formData.append("session_id", sessionId || "");
 
-    if (report?.human_summary) {
-      setMessages((prev) => [
-        ...prev,
-        {
-          sender: true,
-          message: report.human_summary,
-        },
-      ]);
-      return;
-    }
+    formData.append("message", msg);
 
-    setMessages((prev) => [
-      ...prev,
-      {
-        sender: true,
-        message: "",
-        structured_data: report,
-      },
-    ]);
-  } catch (error) {
-    if (error.response) {
-      const status = error.response.status;
+    images.forEach((img) => formData.append("files", img.file));
+    pdfs.forEach((pdf) => formData.append("files", pdf.file));
 
-      if (status === 413) {
-        showNotification("The file is too large to process");
-      } else if (status === 502 || status === 503 || status === 504) {
-        showNotification(
-          "The AI service is currently updating or busy. Please try again in a minute."
-        );
-      } else {
-        showNotification("An unexpected error occurred.");
+    try {
+      const res = await axiosPublic.post("/chat/guest/unified", formData, {
+        headers: { "Content-Type": "multipart/form-data" },
+      });
+
+      const report = res.data?.report;
+      const returnedSession = res.data?.session_id;
+
+      if (returnedSession && !sessionId) {
+        setSessionId(returnedSession);
+        console.log("SESSION STORED:", returnedSession);
       }
+
+      setMessages((prev) => prev.filter((m) => !m.loading));
+
+      if (report?.human_summary) {
+        setMessages((prev) => [
+          ...prev,
+          {
+            sender: true,
+            message: report.human_summary,
+            report,
+          },
+        ]);
+        return;
+      }
+
+      setMessages((prev) => [
+        ...prev,
+        {
+          sender: true,
+          message: "No summary received.",
+          report,
+        },
+      ]);
+    } catch (error) {
+      if (error.response) {
+        const status = error.response.status;
+
+        if (status === 413) {
+          showNotification("The file is too large to process");
+        } else if ([502, 503, 504].includes(status)) {
+          showNotification("AI is busy. Try again in a minute.");
+        } else {
+          showNotification("An unexpected error occurred.");
+        }
+      }
+    } finally {
+      setLoading(false);
     }
-  } finally {
-    setLoading(false);
-  }
-};
-
-
+  };
 
   return (
     <>
@@ -193,11 +202,11 @@ const handleSendMessage = async (e) => {
       <div
         className={`${
           pathName === "/inbox" ? "w-full" : "w-[80%] md:w-[70%] lg:w-[50%]"
-        } flex border-2 border-[#00793D] px-4 py-2 rounded-full mt-4 shadow-sm`}
+        } flex border-2 border-[#00793D] px-4 py-2 rounded-2xl mt-4 shadow-sm`}
       >
         <form
           onSubmit={handleSendMessage}
-          className="w-full flex items-center gap-4"
+          className="w-full flex items-end gap-4"
         >
           <div className="relative">
             <Icon
@@ -254,15 +263,24 @@ const handleSendMessage = async (e) => {
             )}
           </div>
 
-          <input
-            type="text"
+          <textarea
+            ref={textareaRef}
             name="message"
+            value={message}
+            onChange={(e) => setMessage(e.target.value)}
+            onKeyDown={(e) => {
+              if (e.key === "Enter" && !e.shiftKey) {
+                e.preventDefault();
+                e.target.form.requestSubmit();
+              }
+            }}
+            rows={1}
             placeholder={
               isArabic
                 ? "اسألني عن أي شيء يخص سيارتك…"
                 : "Ask me Anything about your car..."
             }
-            className="flex-1 bg-transparent text-white placeholder:text-white outline-none"
+            className="flex-1 bg-transparent text-white placeholder:text-white outline-none resize-none overflow-y-auto hide-scrollbar"
           />
 
           {loadding ? (
@@ -271,7 +289,7 @@ const handleSendMessage = async (e) => {
             <button type="submit">
               <Icon
                 icon="ri:send-plane-fill"
-                className={`text-[#00793D] `}
+                className="text-[#00793D]"
                 width={24}
                 height={24}
               />

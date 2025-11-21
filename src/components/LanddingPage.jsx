@@ -1,16 +1,13 @@
 "use client";
-import { useContext, useEffect, useRef, useState } from "react";
+import { useContext } from "react";
 
-import IputFiled from "./IputFiled";
 import SocialIcon from "./SocialIcon";
 import Container from "./Container";
 import { AuthContext } from "@/provider/AuthProvider";
 import Link from "next/link";
 
-
-
 export default function LanddingPage() {
-  const { isArabic } = useContext(AuthContext)
+  const { isArabic } = useContext(AuthContext);
 
   return (
     <Container>
@@ -37,12 +34,17 @@ export default function LanddingPage() {
           </p>
         </div>
 
-        <div className="bg-[#00793D] py-3 px-32 rounded-full text-white font-medium">
-          <Link href={"/inbox"}>Start Chatting</Link>
+        <div>
+          <Link
+            className="bg-[#00793D] py-3 px-10 md:px-24 lg:px-32 rounded-full text-white font-medium"
+            href={"/inbox"}
+          >
+            Start Chatting
+          </Link>
         </div>
       </section>
 
       <SocialIcon isArabic={isArabic} />
     </Container>
   );
-};
+}
