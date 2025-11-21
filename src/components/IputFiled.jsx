@@ -202,11 +202,11 @@ export default function InputField() {
       <div
         className={`${
           pathName === "/inbox" ? "w-full" : "w-[80%] md:w-[70%] lg:w-[50%]"
-        } flex border-2 border-[#00793D] px-4 py-2 rounded-full mt-4 shadow-sm`}
+        } flex border-2 border-[#00793D] px-4 py-2 rounded-2xl mt-4 shadow-sm`}
       >
         <form
           onSubmit={handleSendMessage}
-          className="w-full flex items-center gap-4"
+          className="w-full flex items-end gap-4"
         >
           <div className="relative">
             <Icon

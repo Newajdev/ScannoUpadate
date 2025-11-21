@@ -11,12 +11,10 @@ const Inbox = () => {
   const { messages } = useContext(AuthContext);
   const bottomRef = useRef(null);
 
-  // Auto-scroll when messages update
   useEffect(() => {
     bottomRef.current?.scrollIntoView({ behavior: "smooth" });
   }, [messages]);
 
-  /* ---------------- Loading Dots ---------------- */
   const LoadingDots = () => {
     const [dots, setDots] = useState("");
     useEffect(() => {
@@ -29,20 +27,17 @@ const Inbox = () => {
     return <>Analyzing{dots}</>;
   };
 
-  /* ---------------- Latest-only Animation ---------------- */
   const AnimatedText = ({ msg, isLatest }) => {
     const [text, setText] = useState("");
 
     const normalized = msg?.replace(/\r\n/g, "\n") ?? "";
 
     useEffect(() => {
-      // ❗ পুরোনো message → কোনো animation হবে না
       if (!isLatest) {
         setText(normalized);
         return;
       }
 
-      // Latest message → typing effect
       let i = 0;
       setText("");
 
@@ -50,7 +45,6 @@ const Inbox = () => {
         setText(normalized.slice(0, i + 1));
         i++;
 
-        // Auto scroll during typing
         bottomRef.current?.scrollIntoView({ behavior: "smooth" });
 
         if (i >= normalized.length) {
@@ -84,9 +78,7 @@ const Inbox = () => {
   return (
     <>
       <div className="pt-24 pb-10 w-[90%] lg:w-[70%] h-full flex flex-col justify-center items-center mx-auto">
-
         <div className="flex-1 w-full py-2 overflow-y-auto hide-scrollbar">
-
           {messages.map((msg, idx) => {
             const finalMessage =
               msg?.message ?? msg?.report?.human_summary ?? "";
@@ -101,8 +93,6 @@ const Inbox = () => {
                   msg.sender ? "items-start" : "items-end"
                 }`}
               >
-
-                {/* AI MESSAGE */}
                 {msg.sender ? (
                   <div className="flex flex-col items-start max-w-[95%]">
                     {msg.loading && (
@@ -121,13 +111,13 @@ const Inbox = () => {
                     )}
                   </div>
                 ) : (
-                  /* USER MESSAGE */
                   <div className="max-w-[80%]">
-
-                    {/* IMAGES */}
                     <div className="flex gap-1 flex-wrap justify-end">
                       {msg.images?.map((img, i) => (
-                        <div key={i} className="bg-[#00793D] p-1 rounded-2xl mb-1">
+                        <div
+                          key={i}
+                          className="bg-[#00793D] p-1 rounded-2xl mb-1"
+                        >
                           <Image
                             src={img.url}
                             alt="img"
@@ -139,7 +129,6 @@ const Inbox = () => {
                       ))}
                     </div>
 
-                    {/* PDF FILES */}
                     <div className="flex gap-1 flex-wrap justify-end">
                       {msg.pdfs?.map((pdf, i) => (
                         <div
@@ -159,7 +148,6 @@ const Inbox = () => {
                     )}
                   </div>
                 )}
-
               </div>
             );
           })}
